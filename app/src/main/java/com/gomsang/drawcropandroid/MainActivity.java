@@ -23,13 +23,10 @@ public class MainActivity extends AppCompatActivity {
         final Bitmap bitmap = drawable.getBitmap();
 
         drawCropView.setImageBitmap(bitmap);
-        drawCropView.setOnCropListener(new DrawCropView.OnCropListener() {
-            @Override
-            public void onCrop(Bitmap result) {
-                imageView.bringToFront();
-                drawCropView.setVisibility(View.GONE);
-                imageView.setImageBitmap(result);
-            }
+        drawCropView.setOnCropListener(result -> {
+            imageView.bringToFront();
+            drawCropView.setVisibility(View.GONE);
+            imageView.setImageBitmap(result);
         });
     }
 }

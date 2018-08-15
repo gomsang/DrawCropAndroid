@@ -24,6 +24,7 @@ import java.util.ArrayList;
 
 public class DrawCropView extends View implements View.OnTouchListener {
     private final int DISTANCE_CONSIDER_CLOESR = 50;
+    private final int DISTANCE_MINIMUM = 24;
 
     private int canvasWidth, canvasHeight;
 
@@ -121,10 +122,16 @@ public class DrawCropView extends View implements View.OnTouchListener {
                 if (!(measureDistance(drawCoordinates.get(0), currentCoordinate) < DISTANCE_CONSIDER_CLOESR)) {
                     Toast.makeText(getContext(), "Please put up your hands in closer with first position", Toast.LENGTH_SHORT).show();
                     drawCoordinates.clear();
-                }else{
-                    showProduceDialog();
+                    this.invalidate();
+                    break;
                 }
-                // 뷰동기화
+                if (drawCoordinates.size() < DISTANCE_MINIMUM) {
+                    Toast.makeText(getContext(), "Please draw more positions for create sticker", Toast.LENGTH_SHORT).show();
+                    drawCoordinates.clear();
+                    this.invalidate();
+                    break;
+                }
+                showProduceDialog();
                 this.invalidate();
                 break;
             default:
@@ -178,23 +185,17 @@ public class DrawCropView extends View implements View.OnTouchListener {
         return targetCoordinate;
     }
 
-    private void showProduceDialog(){
+    private void showProduceDialog() {
         AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
         builder.setTitle("Do you proceed like this?");
         builder.setMessage("The image will be generated as you draw.");
         builder.setPositiveButton("Yes",
-                new DialogInterface.OnClickListener() {
-                    public void onClick(DialogInterface dialog, int which) {
-                        if (onCropListener != null) onCropListener.onCrop(produce());
-                        init();
-                    }
+                (dialog, which) -> {
+                    if (onCropListener != null) onCropListener.onCrop(produce());
+                    init();
                 });
         builder.setNegativeButton("No",
-                new DialogInterface.OnClickListener() {
-                    public void onClick(DialogInterface dialog, int which) {
-                        init();
-                    }
-                });
+                (dialog, which) -> init());
         builder.show();
     }
 
