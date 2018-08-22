@@ -1,8 +1,8 @@
 package com.gomsang.drawcropandroid.libs;
 
 import android.app.AlertDialog;
+import android.arch.lifecycle.SingleGeneratedAdapterObserver;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
@@ -23,7 +23,9 @@ import android.widget.Toast;
 import java.util.ArrayList;
 
 public class DrawCropView extends View implements View.OnTouchListener {
-    private final int DISTANCE_CONSIDER_CLOESR = 50;
+    private final int SIZE_MAGNIFIER = 200;
+
+    private final int DISTANCE_CONSIDER_CLOESR = 100;
     private final int DISTANCE_MINIMUM = 24;
 
     private int canvasWidth, canvasHeight;
@@ -91,8 +93,28 @@ public class DrawCropView extends View implements View.OnTouchListener {
         }
 
         if (drawCoordinates.size() > 0) {
+            // crop parts for magnify
+            canvas.drawBitmap(getMagnifierPart(drawCoordinates.get(drawCoordinates.size() - 1)), 0, 0, null);
+            canvas.drawPoint(SIZE_MAGNIFIER / 2, SIZE_MAGNIFIER / 2, linePaint);
+
             canvas.drawPath(generatePathByCoordinate(drawCoordinates, 1), linePaint);
         }
+    }
+
+    public Bitmap getMagnifierPart(Coordinate lastCoordinate) {
+        Coordinate lastBitmapCoordinate = convertToBitmapSideCoordinate(lastCoordinate);
+
+        final Bitmap visibleBitmapWithBorder =
+                Bitmap.createBitmap((actualVisibleBitmap.getWidth() + SIZE_MAGNIFIER / 4) * 2, (actualVisibleBitmap.getHeight() + SIZE_MAGNIFIER / 4) * 2, actualVisibleBitmap.getConfig());
+        Canvas canvas = new Canvas(visibleBitmapWithBorder);
+        canvas.drawColor(Color.BLACK);
+        canvas.drawBitmap(actualVisibleBitmap, SIZE_MAGNIFIER / 4, SIZE_MAGNIFIER / 4, null);
+
+
+        Bitmap magnifyPart = Bitmap.createBitmap(visibleBitmapWithBorder, (int) lastBitmapCoordinate.x, (int) lastBitmapCoordinate.y, SIZE_MAGNIFIER / 2, SIZE_MAGNIFIER / 2);
+        magnifyPart = Bitmap.createScaledBitmap(magnifyPart, SIZE_MAGNIFIER, SIZE_MAGNIFIER, true);
+
+        return magnifyPart;
     }
 
     public static Bitmap scaleBitmapAndKeepRation(Bitmap TargetBmp, int reqHeightInPixels, int reqWidthInPixels) {
@@ -183,6 +205,21 @@ public class DrawCropView extends View implements View.OnTouchListener {
             targetCoordinate.y = targetStartHeight + targetHeight;
 
         return targetCoordinate;
+    }
+
+    // get coordinates on actual visible bitmap side.
+    private Coordinate convertToBitmapSideCoordinate(Coordinate targetCoordinate) {
+        targetCoordinate = adjustCoordinateForFit(targetCoordinate);
+
+        final int targetWidth = actualVisibleBitmap.getWidth();
+        final int targetHeight = actualVisibleBitmap.getHeight();
+        final int targetStartWidth = (canvasWidth - targetWidth) / 2;
+        final int targetStartHeight = (canvasHeight - targetHeight) / 2;
+
+        Coordinate bitmapSideCoordinate = new Coordinate();
+        bitmapSideCoordinate.x = targetCoordinate.x - targetStartWidth;
+        bitmapSideCoordinate.y = targetCoordinate.y - targetStartHeight;
+        return bitmapSideCoordinate;
     }
 
     private void showProduceDialog() {
