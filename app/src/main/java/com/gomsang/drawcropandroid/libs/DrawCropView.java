@@ -1,7 +1,7 @@
 package com.gomsang.drawcropandroid.libs;
 
 import android.app.AlertDialog;
-import android.arch.lifecycle.SingleGeneratedAdapterObserver;
+import androidx.lifecycle.SingleGeneratedAdapterObserver;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
@@ -15,21 +15,19 @@ import android.graphics.PorterDuff;
 import android.graphics.PorterDuffXfermode;
 import android.graphics.Rect;
 import android.graphics.RectF;
-import android.support.annotation.Nullable;
+import androidx.annotation.Nullable;
 import android.util.AttributeSet;
-import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 import android.widget.Toast;
 
-import java.lang.reflect.Array;
 import java.util.ArrayList;
 
 public class DrawCropView extends View implements View.OnTouchListener {
     private final int SIZE_MAGNIFIER = 200;
 
     private final int DISTANCE_CONSIDER_CLOESR = 100;
-    private final int DISTANCE_MINIMUM = 24;
+    private final int DISTANCE_MINIMUM = 12;
 
     private int canvasWidth, canvasHeight;
 
@@ -105,8 +103,8 @@ public class DrawCropView extends View implements View.OnTouchListener {
         }
     }
 
-    public Bitmap getMagnifierPart(Coordinate lastCoordinate) {
-        Coordinate lastBitmapCoordinate = convertToBitmapSideCoordinate(lastCoordinate);
+    public Bitmap getMagnifierPart(Coordinate touchedPoint) {
+        Coordinate lastBitmapCoordinate = convertToBitmapSideCoordinate(touchedPoint);
 
         final Bitmap visibleBitmapWithBorder =
                 Bitmap.createBitmap((actualVisibleBitmap.getWidth() + SIZE_MAGNIFIER / 4) * 2, (actualVisibleBitmap.getHeight() + SIZE_MAGNIFIER / 4) * 2, actualVisibleBitmap.getConfig());
