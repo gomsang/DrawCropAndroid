@@ -13,13 +13,16 @@ import android.graphics.Paint;
 import android.graphics.Path;
 import android.graphics.PorterDuff;
 import android.graphics.PorterDuffXfermode;
+import android.graphics.Rect;
 import android.graphics.RectF;
 import android.support.annotation.Nullable;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 import android.widget.Toast;
 
+import java.lang.reflect.Array;
 import java.util.ArrayList;
 
 public class DrawCropView extends View implements View.OnTouchListener {
@@ -81,7 +84,8 @@ public class DrawCropView extends View implements View.OnTouchListener {
 
         if (targetOriginalBitmap != null) {
             // If target's original bitmap is bigger than view size, adjust size for fit
-            actualVisibleBitmap = scaleBitmapAndKeepRation(targetOriginalBitmap, canvas.getHeight(), canvas.getWidth());
+            if (actualVisibleBitmap == null)
+                actualVisibleBitmap = scaleBitmapAndKeepRation(targetOriginalBitmap, canvas.getHeight(), canvas.getWidth());
             canvas.drawBitmap(actualVisibleBitmap, canvasWidth / 2 - actualVisibleBitmap.getWidth() / 2,
                     canvasHeight / 2 - actualVisibleBitmap.getHeight() / 2, null);
         } else {
@@ -258,8 +262,12 @@ public class DrawCropView extends View implements View.OnTouchListener {
         resultCanvas.drawPath(generatePathByCoordinate(drawCoordinates, 1), resultPaint);
         resultPaint.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.SRC_IN));
 
-        resultCanvas.drawBitmap(actualVisibleBitmap, canvasWidth / 2 - actualVisibleBitmap.getWidth() / 2,
-                canvasHeight / 2 - actualVisibleBitmap.getHeight() / 2, resultPaint);
+        Rect dst = new Rect(canvasWidth / 2 - actualVisibleBitmap.getWidth() / 2,
+                canvasHeight / 2 - actualVisibleBitmap.getHeight() / 2,
+                canvasWidth / 2 + actualVisibleBitmap.getWidth() / 2,
+                canvasHeight / 2 + actualVisibleBitmap.getHeight() / 2);
+
+        resultCanvas.drawBitmap(actualVisibleBitmap, null, dst, resultPaint);
 
         return BitmapUtil.cropBitmapToBoundingBox(resultImage, Color.TRANSPARENT);
     }
