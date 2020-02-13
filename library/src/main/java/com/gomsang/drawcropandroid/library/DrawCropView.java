@@ -1,7 +1,6 @@
-package com.gomsang.drawcropandroid.libs;
+package com.gomsang.drawcropandroid.library;
 
 import android.app.AlertDialog;
-import androidx.lifecycle.SingleGeneratedAdapterObserver;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
@@ -15,11 +14,12 @@ import android.graphics.PorterDuff;
 import android.graphics.PorterDuffXfermode;
 import android.graphics.Rect;
 import android.graphics.RectF;
-import androidx.annotation.Nullable;
 import android.util.AttributeSet;
 import android.view.MotionEvent;
 import android.view.View;
 import android.widget.Toast;
+
+import androidx.annotation.Nullable;
 
 import java.util.ArrayList;
 
@@ -103,6 +103,10 @@ public class DrawCropView extends View implements View.OnTouchListener {
         }
     }
 
+    /*
+        TODO : fix wrong magnifier part.
+
+    */
     public Bitmap getMagnifierPart(Coordinate touchedPoint) {
         Coordinate lastBitmapCoordinate = convertToBitmapSideCoordinate(touchedPoint);
 

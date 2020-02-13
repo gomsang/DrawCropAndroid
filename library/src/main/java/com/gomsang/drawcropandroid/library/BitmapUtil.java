@@ -1,4 +1,4 @@
-package com.gomsang.drawcropandroid.libs;
+package com.gomsang.drawcropandroid.library;
 
 import android.content.Context;
 import android.graphics.Bitmap;
