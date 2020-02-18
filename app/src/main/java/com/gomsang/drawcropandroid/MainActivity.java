@@ -28,6 +28,5 @@ public class MainActivity extends AppCompatActivity {
             drawCropView.setVisibility(View.GONE);
             imageView.setImageBitmap(result);
         });
-        drawCropView.setMaginfierEnabled(false);
     }
 }
