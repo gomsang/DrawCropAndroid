@@ -15,6 +15,7 @@ import android.graphics.PorterDuffXfermode;
 import android.graphics.Rect;
 import android.graphics.RectF;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 import android.widget.Toast;
@@ -71,6 +72,7 @@ public class DrawCropView extends View implements View.OnTouchListener {
 
     public void setImageBitmap(Bitmap imageBitmap) {
         targetOriginalBitmap = imageBitmap;
+        actualVisibleBitmap = null;
         invalidate();
     }
 
@@ -96,7 +98,9 @@ public class DrawCropView extends View implements View.OnTouchListener {
 
         if (drawCoordinates.size() > 0) {
             // crop parts for magnify
-            canvas.drawBitmap(getMagnifierPart(drawCoordinates.get(drawCoordinates.size() - 1)), 0, 0, null);
+//            canvas.drawBitmap(getMagnifierPart(drawCoordinates.get(drawCoordinates.size() - 1)), 0, 0, null);
+            canvas.drawBitmap(Bitmap.createScaledBitmap(getMagnifierPart(drawCoordinates.get(drawCoordinates.size() - 1)), SIZE_MAGNIFIER, SIZE_MAGNIFIER, false)
+                    , 0, 0, null);
             canvas.drawPoint(SIZE_MAGNIFIER / 2, SIZE_MAGNIFIER / 2, linePaint);
 
             canvas.drawPath(generatePathByCoordinate(drawCoordinates, 1), linePaint);
@@ -105,21 +109,53 @@ public class DrawCropView extends View implements View.OnTouchListener {
 
     /*
         TODO : fix wrong magnifier part.
-
     */
     public Bitmap getMagnifierPart(Coordinate touchedPoint) {
-        Coordinate lastBitmapCoordinate = convertToBitmapSideCoordinate(touchedPoint);
+        final int VALUE_MAGNIFY = 40;
+
+        // adjust view coordinate to bitmap side coordinate
+        Coordinate touchedPointOnBitmap = new Coordinate();
+        touchedPointOnBitmap.x = touchedPoint.x - (canvasWidth / 2 - actualVisibleBitmap.getWidth() / 2);
+        touchedPointOnBitmap.y = touchedPoint.y - (canvasHeight / 2 - actualVisibleBitmap.getHeight() / 2);
+
+
+        Bitmap.Config conf = Bitmap.Config.ARGB_8888; // see other conf types
+        Bitmap bmp = Bitmap.createBitmap(actualVisibleBitmap.getWidth() + VALUE_MAGNIFY * 2,
+                actualVisibleBitmap.getHeight() + VALUE_MAGNIFY * 2, conf);
+
+
+        Canvas canvas = new Canvas(bmp);
+        canvas.drawColor(Color.BLACK);
+
+        Rect dst = new Rect(canvas.getWidth() / 2 - actualVisibleBitmap.getWidth() / 2,
+                canvas.getHeight() / 2 - actualVisibleBitmap.getHeight() / 2,
+                canvas.getWidth() / 2 + actualVisibleBitmap.getWidth() / 2,
+                canvas.getHeight() / 2 + actualVisibleBitmap.getHeight() / 2);
+
+        canvas.drawBitmap(actualVisibleBitmap, null, dst, null);
+
+        Log.d("touchedPoint", bmp.getWidth() + "  |  " + bmp.getHeight());
+        Log.d("touchedPoint", touchedPointOnBitmap.x + "  |  " + touchedPointOnBitmap.y);
+
+        Bitmap magnifyPart =
+                Bitmap.createBitmap(bmp, (int) touchedPointOnBitmap.x,
+                        (int) touchedPointOnBitmap.y, VALUE_MAGNIFY * 2, VALUE_MAGNIFY * 2);
+
+      /*
 
         final Bitmap visibleBitmapWithBorder =
-                Bitmap.createBitmap((actualVisibleBitmap.getWidth() + SIZE_MAGNIFIER / 4) * 2, (actualVisibleBitmap.getHeight() + SIZE_MAGNIFIER / 4) * 2, actualVisibleBitmap.getConfig());
-        Canvas canvas = new Canvas(visibleBitmapWithBorder);
+                Bitmap.createBitmap((actualVisibleBitmap.getWidth() + SIZE_MAGNIFIER / 4) * 2,
+                        (actualVisibleBitmap.getHeight() + SIZE_MAGNIFIER / 4) * 2,
+                        actualVisibleBitmap.getConfig());
+
+        final Canvas canvas = new Canvas(visibleBitmapWithBorder);
         canvas.drawColor(Color.BLACK);
         canvas.drawBitmap(actualVisibleBitmap, SIZE_MAGNIFIER / 4, SIZE_MAGNIFIER / 4, null);
 
 
-        Bitmap magnifyPart = Bitmap.createBitmap(visibleBitmapWithBorder, (int) lastBitmapCoordinate.x, (int) lastBitmapCoordinate.y, SIZE_MAGNIFIER / 2, SIZE_MAGNIFIER / 2);
-        magnifyPart = Bitmap.createScaledBitmap(magnifyPart, SIZE_MAGNIFIER, SIZE_MAGNIFIER, true);
-
+        Bitmap magnifyPart =
+                Bitmap.createBitmap(visibleBitmapWithBorder, (int) lastBitmapCoordinate.x, (int) lastBitmapCoordinate.y, SIZE_MAGNIFIER / 2, SIZE_MAGNIFIER / 2);
+        magnifyPart = Bitmap.createScaledBitmap(magnifyPart, SIZE_MAGNIFIER, SIZE_MAGNIFIER, true);*/
         return magnifyPart;
     }
 
@@ -134,6 +170,7 @@ public class DrawCropView extends View implements View.OnTouchListener {
         // 터치된 좌표를 데이터화 함
         final Coordinate currentCoordinate = new Coordinate();
         currentCoordinate.x = (int) event.getX();
+
         currentCoordinate.y = (int) event.getY();
         adjustCoordinateForFit(currentCoordinate);
 

@@ -7,10 +7,11 @@
     android:layout_height="match_parent"
     tools:context=".MainActivity">
 
-    <com.gomsang.drawcropandroid.libs.DrawCropView
+    <com.gomsang.drawcropandroid.library.DrawCropView
         android:id="@+id/cropView"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent" />
+        android:layout_width="300dp"
+        android:background="#efefef"
+        android:layout_height="300dp" />
 
     <ImageView
         android:id="@+id/imageView"

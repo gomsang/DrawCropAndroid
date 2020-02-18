@@ -7,7 +7,7 @@ import android.os.Bundle;
 import android.view.View;
 import android.widget.ImageView;
 
-import com.gomsang.drawcropandroid.libs.DrawCropView;
+import com.gomsang.drawcropandroid.library.DrawCropView;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -28,6 +28,5 @@ public class MainActivity extends AppCompatActivity {
             drawCropView.setVisibility(View.GONE);
             imageView.setImageBitmap(result);
         });
-
     }
 }
