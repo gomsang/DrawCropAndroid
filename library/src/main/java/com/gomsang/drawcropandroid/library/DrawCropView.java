@@ -56,6 +56,9 @@ public class DrawCropView extends View implements View.OnTouchListener {
     public void setMaginfierEnabled(boolean maginfierEnabled) {
         this.maginfierEnabled = maginfierEnabled;
     }
+    public void setDistanceCloser(int DISTANCE_CONSIDER_CLOSER) {
+        this.DISTANCE_CONSIDER_CLOSER = DISTANCE_CONSIDER_CLOSER;
+    }
 
     public void setMinimumPositions(int POSITIONS_MINIMUM) {
         this.POSITIONS_MINIMUM = POSITIONS_MINIMUM;
