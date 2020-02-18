@@ -15,7 +15,6 @@ import android.graphics.PorterDuffXfermode;
 import android.graphics.Rect;
 import android.graphics.RectF;
 import android.util.AttributeSet;
-import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 import android.widget.Toast;
@@ -37,7 +36,9 @@ public class DrawCropView extends View implements View.OnTouchListener {
 
     private ArrayList<Coordinate> drawCoordinates = new ArrayList<>();
 
+    private Paint lineWithDashPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private Paint linePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+
 
     private OnCropListener onCropListener;
 
@@ -59,9 +60,14 @@ public class DrawCropView extends View implements View.OnTouchListener {
 
     public void init() {
         // construct paint for line (draw path)
+        lineWithDashPaint.setStyle(Paint.Style.STROKE);
+        lineWithDashPaint.setPathEffect(new DashPathEffect(new float[]{10, 20}, 0));
+        lineWithDashPaint.setStrokeWidth(5);
+        lineWithDashPaint.setShadowLayer(10.0f, 0.0f, 2.0f, 0xFF000000);
+        lineWithDashPaint.setColor(Color.WHITE);
+
         linePaint.setStyle(Paint.Style.STROKE);
-        linePaint.setPathEffect(new DashPathEffect(new float[]{10, 20}, 0));
-        linePaint.setStrokeWidth(5);
+        linePaint.setStrokeWidth(3);
         linePaint.setShadowLayer(10.0f, 0.0f, 2.0f, 0xFF000000);
         linePaint.setColor(Color.WHITE);
 
@@ -101,15 +107,11 @@ public class DrawCropView extends View implements View.OnTouchListener {
 //            canvas.drawBitmap(getMagnifierPart(drawCoordinates.get(drawCoordinates.size() - 1)), 0, 0, null);
             canvas.drawBitmap(Bitmap.createScaledBitmap(getMagnifierPart(drawCoordinates.get(drawCoordinates.size() - 1)), SIZE_MAGNIFIER, SIZE_MAGNIFIER, false)
                     , 0, 0, null);
-            canvas.drawPoint(SIZE_MAGNIFIER / 2, SIZE_MAGNIFIER / 2, linePaint);
-
-            canvas.drawPath(generatePathByCoordinate(drawCoordinates, 1), linePaint);
+            canvas.drawPoint(SIZE_MAGNIFIER / 2, SIZE_MAGNIFIER / 2, lineWithDashPaint);
+            canvas.drawPath(genPathByCoordinate(drawCoordinates, 1), lineWithDashPaint);
         }
     }
 
-    /*
-        TODO : fix wrong magnifier part.
-    */
     public Bitmap getMagnifierPart(Coordinate touchedPoint) {
         final int VALUE_MAGNIFY = 40;
 
@@ -127,35 +129,19 @@ public class DrawCropView extends View implements View.OnTouchListener {
         Canvas canvas = new Canvas(bmp);
         canvas.drawColor(Color.BLACK);
 
+
         Rect dst = new Rect(canvas.getWidth() / 2 - actualVisibleBitmap.getWidth() / 2,
                 canvas.getHeight() / 2 - actualVisibleBitmap.getHeight() / 2,
                 canvas.getWidth() / 2 + actualVisibleBitmap.getWidth() / 2,
                 canvas.getHeight() / 2 + actualVisibleBitmap.getHeight() / 2);
 
         canvas.drawBitmap(actualVisibleBitmap, null, dst, null);
+        canvas.drawPath(genPathByCoordinate(genAdditionedCoordinates(drawCoordinates, VALUE_MAGNIFY, VALUE_MAGNIFY), 1), linePaint);
 
-        Log.d("touchedPoint", bmp.getWidth() + "  |  " + bmp.getHeight());
-        Log.d("touchedPoint", touchedPointOnBitmap.x + "  |  " + touchedPointOnBitmap.y);
 
         Bitmap magnifyPart =
                 Bitmap.createBitmap(bmp, (int) touchedPointOnBitmap.x,
                         (int) touchedPointOnBitmap.y, VALUE_MAGNIFY * 2, VALUE_MAGNIFY * 2);
-
-      /*
-
-        final Bitmap visibleBitmapWithBorder =
-                Bitmap.createBitmap((actualVisibleBitmap.getWidth() + SIZE_MAGNIFIER / 4) * 2,
-                        (actualVisibleBitmap.getHeight() + SIZE_MAGNIFIER / 4) * 2,
-                        actualVisibleBitmap.getConfig());
-
-        final Canvas canvas = new Canvas(visibleBitmapWithBorder);
-        canvas.drawColor(Color.BLACK);
-        canvas.drawBitmap(actualVisibleBitmap, SIZE_MAGNIFIER / 4, SIZE_MAGNIFIER / 4, null);
-
-
-        Bitmap magnifyPart =
-                Bitmap.createBitmap(visibleBitmapWithBorder, (int) lastBitmapCoordinate.x, (int) lastBitmapCoordinate.y, SIZE_MAGNIFIER / 2, SIZE_MAGNIFIER / 2);
-        magnifyPart = Bitmap.createScaledBitmap(magnifyPart, SIZE_MAGNIFIER, SIZE_MAGNIFIER, true);*/
         return magnifyPart;
     }
 
@@ -207,7 +193,7 @@ public class DrawCropView extends View implements View.OnTouchListener {
     }
 
     // generate path by coordinates arr
-    private Path generatePathByCoordinate(ArrayList<Coordinate> coordinates, int interval) {
+    private Path genPathByCoordinate(ArrayList<Coordinate> coordinates, int interval) {
         Path path = new Path();
         boolean first = true;
         for (int ci = 0; ci < coordinates.size(); ci += interval) {
@@ -229,6 +215,23 @@ public class DrawCropView extends View implements View.OnTouchListener {
     private int measureDistance(Coordinate targetA, Coordinate targetB) {
         double distance = Math.sqrt(Math.pow(targetA.x - targetB.x, 2) + Math.pow(targetA.y - targetB.y, 2));
         return (int) distance;
+    }
+
+    private ArrayList<Coordinate> genAdditionedCoordinates(ArrayList<Coordinate> coordinates, int addX, int addY) {
+        ArrayList<Coordinate> additionCoordinates = new ArrayList<>();
+
+        for (Coordinate coordinate : coordinates) {
+            Coordinate modifiedCoordinate = new Coordinate();
+            modifiedCoordinate.x = coordinate.x;
+            modifiedCoordinate.y = coordinate.y;
+            modifiedCoordinate = convertToBitmapSideCoordinate(modifiedCoordinate);
+            modifiedCoordinate.x += addX;
+            modifiedCoordinate.y += addY;
+
+            additionCoordinates.add(modifiedCoordinate);
+        }
+
+        return additionCoordinates;
     }
 
     private Coordinate adjustCoordinateForFit(Coordinate targetCoordinate) {
@@ -254,14 +257,9 @@ public class DrawCropView extends View implements View.OnTouchListener {
     private Coordinate convertToBitmapSideCoordinate(Coordinate targetCoordinate) {
         targetCoordinate = adjustCoordinateForFit(targetCoordinate);
 
-        final int targetWidth = actualVisibleBitmap.getWidth();
-        final int targetHeight = actualVisibleBitmap.getHeight();
-        final int targetStartWidth = (canvasWidth - targetWidth) / 2;
-        final int targetStartHeight = (canvasHeight - targetHeight) / 2;
-
         Coordinate bitmapSideCoordinate = new Coordinate();
-        bitmapSideCoordinate.x = targetCoordinate.x - targetStartWidth;
-        bitmapSideCoordinate.y = targetCoordinate.y - targetStartHeight;
+        bitmapSideCoordinate.x = targetCoordinate.x - (canvasWidth / 2 - actualVisibleBitmap.getWidth() / 2);
+        bitmapSideCoordinate.y = targetCoordinate.y - (canvasHeight / 2 - actualVisibleBitmap.getHeight() / 2);
         return bitmapSideCoordinate;
     }
 
@@ -298,7 +296,7 @@ public class DrawCropView extends View implements View.OnTouchListener {
         resultPaint.setAntiAlias(true);                         // set anti alias so it smooths
 
         // struct paint for path-crop
-        resultCanvas.drawPath(generatePathByCoordinate(drawCoordinates, 1), resultPaint);
+        resultCanvas.drawPath(genPathByCoordinate(drawCoordinates, 1), resultPaint);
         resultPaint.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.SRC_IN));
 
         Rect dst = new Rect(canvasWidth / 2 - actualVisibleBitmap.getWidth() / 2,
